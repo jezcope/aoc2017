@@ -1,1 +1,4 @@
 .cache
+*.hi
+*.o
+01-inverse-captcha
