@@ -1,0 +1,45 @@
+import sys
+
+def inverse_captcha_(s, acc=0):
+    case reiterable(s):
+        match (|d, d|) :: rest:
+            return inverse_captcha_((|d|) :: rest, acc + int(d))
+        match (|d0, d1|) :: rest:
+            return inverse_captcha_((|d1|) :: rest, acc)
+
+    return acc
+
+
+def inverse_captcha(s) = inverse_captcha_(s :: s[0])
+
+
+def inverse_captcha_1_(s0, s1, acc=0):
+    case (reiterable(s0), reiterable(s1)):
+        match ((|d0|) :: rest0, (|d0|) :: rest1):
+            return inverse_captcha_1_(rest0, rest1, acc + int(d0))
+        match ((|d0|) :: rest0, (|d1|) :: rest1):
+            return inverse_captcha_1_(rest0, rest1, acc)
+
+    return acc
+
+
+def inverse_captcha_1(s) = inverse_captcha_1_(s, s$[len(s)//2:] :: s)
+
+
+def test_inverse_captcha():
+    assert "1111" |> inverse_captcha == 4
+    assert "1122" |> inverse_captcha == 3
+    assert "1234" |> inverse_captcha == 0
+    assert "91212129" |> inverse_captcha == 9
+
+
+def test_inverse_captcha_1():
+    assert "1212" |> inverse_captcha_1 == 6
+    assert "1221" |> inverse_captcha_1 == 0
+    assert "123425" |> inverse_captcha_1 == 4
+    assert "123123" |> inverse_captcha_1 == 12
+    assert "12131415" |> inverse_captcha_1 == 4
+
+if __name__ == "__main__":
+    sys.argv[1] |> inverse_captcha |> print
+    sys.argv[1] |> inverse_captcha_1 |> print
