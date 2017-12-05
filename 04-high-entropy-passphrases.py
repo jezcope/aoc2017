@@ -9,9 +9,9 @@ def is_valid(passphrase):
 
 def is_valid_ana(passphrase):
     counter = Counter(''.join(sorted(word)) for word in passphrase.split())
-
     return counter.most_common(1)[0][1] == 1
 
 
-print(sum(map(is_valid, input())))
-print(sum(map(is_valid_ana, input())))
+lines = list(input())
+print(sum(map(is_valid, lines)))
+print(sum(map(is_valid_ana, lines)))
