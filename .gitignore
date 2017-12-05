@@ -1,4 +1,6 @@
 .cache
 *.hi
 *.o
-01-inverse-captcha
+/01-inverse-captcha
+/03-spiral-memory
+/05-a-maze-of-twisty-trampolines

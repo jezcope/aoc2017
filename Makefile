@@ -1,6 +1,7 @@
 SRC_HS := $(wildcard *.hs)
 SRC_GO := $(wildcard *.go)
-SRC_ALL := $(sort $(SRC_HS) $(SRC_GO))
+SRC_CC := $(wildcard *.cc)
+SRC_ALL := $(sort $(SRC_HS) $(SRC_GO) $(SRC_CC))
 
 OUT_ALL := $(basename $(SRC_ALL))
 
@@ -15,5 +16,8 @@ clean:
 
 %: %.go
 	go build $<
+
+%: %.cc
+	g++ -o $@ $<
 
 .PHONY: clean
