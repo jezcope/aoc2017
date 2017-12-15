@@ -10,3 +10,4 @@
 *.prof
 /14-disk-defragmentation
 /15-dueling-generators
+/10-knot-hash
