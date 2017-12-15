@@ -1,7 +1,8 @@
 SRC_HS := $(wildcard [0-9][0-9]-*.hs)
 SRC_GO := $(wildcard [0-9][0-9]-*.go)
 SRC_CC := $(wildcard [0-9][0-9]-*.cc)
-SRC_ALL := $(sort $(SRC_HS) $(SRC_GO) $(SRC_CC))
+SRC_RS := $(wildcard [0-9][0-9]-*.rs)
+SRC_ALL := $(sort $(SRC_HS) $(SRC_GO) $(SRC_CC) $(SRC_RS))
 
 OUT_ALL := $(basename $(SRC_ALL))
 
@@ -19,5 +20,8 @@ clean:
 
 %: %.cc
 	g++ -o $@ $<
+
+%: %.rs
+	rustup run stable rustc $<
 
 .PHONY: clean
