@@ -5,3 +5,8 @@
 /03-spiral-memory
 /05-a-maze-of-twisty-trampolines
 /09-stream-processing
+/13-packet-scanners
+/13-packet-scanners-redux
+*.prof
+/14-disk-defragmentation
+/15-dueling-generators
