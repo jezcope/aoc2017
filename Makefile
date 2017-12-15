@@ -1,6 +1,6 @@
-SRC_HS := $(wildcard *.hs)
-SRC_GO := $(wildcard *.go)
-SRC_CC := $(wildcard *.cc)
+SRC_HS := $(wildcard [0-9][0-9]-*.hs)
+SRC_GO := $(wildcard [0-9][0-9]-*.go)
+SRC_CC := $(wildcard [0-9][0-9]-*.cc)
 SRC_ALL := $(sort $(SRC_HS) $(SRC_GO) $(SRC_CC))
 
 OUT_ALL := $(basename $(SRC_ALL))
@@ -12,7 +12,7 @@ clean:
 	rm -f *.o *.hi
 
 %: %.hs
-	stack ghc $<
+	stack ghc -- --make -rtsopts -prof $<
 
 %: %.go
 	go build $<
