@@ -13,7 +13,7 @@ clean:
 	rm -f *.o *.hi
 
 %: %.hs
-	stack ghc -- --make -rtsopts -prof $<
+	stack ghc -- --make -rtsopts $<
 
 %: %.go
 	go build $<
