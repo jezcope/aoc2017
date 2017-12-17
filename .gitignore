@@ -11,3 +11,5 @@
 /14-disk-defragmentation
 /15-dueling-generators
 /10-knot-hash
+/17-spinlock
+/spinlock.so
