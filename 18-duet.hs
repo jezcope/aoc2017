@@ -4,7 +4,7 @@ module Main where
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
 import Data.List
-import Data.Either (fromRight)
+import Data.Either
 import Data.Maybe
 import Control.Monad.State.Strict
 import Control.Monad.Loops
@@ -26,10 +26,7 @@ type DuetProgram = V.Vector DuetInstruction
 type DuetRegisters = M.Map Char Int
 data Duet = Duet { dRegisters :: DuetRegisters
                  , dPtr :: Int
-                 , dId :: Int
                  , dSendCount :: Int
-                 , dSending :: Maybe Int
-                 , dReceiving :: Maybe Char
                  , dRcvBuf :: DuetQueue
                  , dSndBuf :: DuetQueue
                  , dProgram :: DuetProgram }
@@ -37,7 +34,7 @@ data Duet = Duet { dRegisters :: DuetRegisters
 instance Show Duet where
   show d = show (dRegisters d) ++ " @" ++ show (dPtr d) ++ " S" ++ show (dSndBuf d) ++ " R" ++ show (dRcvBuf d)
 
-defaultDuet = Duet M.empty 0 0 0 Nothing Nothing [] [] V.empty
+defaultDuet = Duet M.empty 0 0 [] [] V.empty
 
 type DuetState = State Duet
 
@@ -45,28 +42,29 @@ program :: GenParser Char st DuetProgram
 program = do
   instructions <- endBy instruction eol
   return $ V.fromList instructions
-instruction = try (oneArg "snd" Snd) <|> oneArg "rcv" Rcv
-              <|> twoArg "set" Set <|> twoArg "add" Add
-              <|> try (twoArg "mul" Mul)
-              <|> twoArg "mod" Mod <|> twoArg "jgz" Jgz
-oneArg n c = do
-  string n >> spaces
-  val <- regOrVal
-  return $ c val
-twoArg n c = do
-  string n >> spaces
-  val1 <- regOrVal
-  spaces
-  val2 <- regOrVal
-  return $ c val1 val2
-regOrVal = register <|> value
-register = do
-  name <- lower
-  return $ Reg name
-value = do
-  val <- many $ oneOf "-0123456789"
-  return $ Val $ read val
-eol = char '\n'
+  where
+    instruction = try (oneArg "snd" Snd) <|> oneArg "rcv" Rcv
+                  <|> twoArg "set" Set <|> twoArg "add" Add
+                  <|> try (twoArg "mul" Mul)
+                  <|> twoArg "mod" Mod <|> twoArg "jgz" Jgz
+    oneArg n c = do
+      string n >> spaces
+      val <- regOrVal
+      return $ c val
+    twoArg n c = do
+      string n >> spaces
+      val1 <- regOrVal
+      spaces
+      val2 <- regOrVal
+      return $ c val1 val2
+    regOrVal = register <|> value
+    register = do
+      name <- lower
+      return $ Reg name
+    value = do
+      val <- many $ oneOf "-0123456789"
+      return $ Val $ read val
+    eol = char '\n'
 
 parseProgram :: String -> Either ParseError DuetProgram
 parseProgram = parse program ""
@@ -156,15 +154,9 @@ execNext = do
     result <- execInst (prog V.! p)
     return result
 
--- runProgram :: DuetState ()
--- runProgram = do
---   finished <- execNext
---   unless finished runProgram
-
 runUntilWait :: DuetState ()
 runUntilWait = do
   waiting <- execNext
-  st <- get
   unless waiting runUntilWait
 
 runTwoPrograms :: Duet -> Duet -> (Int, Int)
@@ -176,11 +168,11 @@ runTwoPrograms !d0 !d1
     (_, d1') = runState runUntilWait d1
     d0'' = d0' { dSndBuf = [], dRcvBuf = dSndBuf d1' }
     d1'' = d1' { dSndBuf = [], dRcvBuf = dSndBuf d0' }
+
 main = do
   prog <- fmap (fromRight V.empty . parseProgram) getContents  
-  let d0 = defaultDuet { dProgram = prog, dId = 0, dRegisters = M.fromList [('p', 0)] }
-      d1 = defaultDuet { dProgram = prog, dId = 1, dRegisters = M.fromList [('p', 1)] }
+  let d0 = defaultDuet { dProgram = prog, dRegisters = M.fromList [('p', 0)] }
+      d1 = defaultDuet { dProgram = prog, dRegisters = M.fromList [('p', 1)] }
       (send0, send1) = runTwoPrograms d0 d1
   putStrLn $ "Program 0 sent " ++ show send0 ++ " messages"
   putStrLn $ "Program 1 sent " ++ show send1 ++ " messages"
-  -- putStrLn $ "Recovered sound: " ++ (show $ fromJust $ dSound st)
