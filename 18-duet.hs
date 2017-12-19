@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Main where
 
 import qualified Data.Vector as V
@@ -11,6 +12,7 @@ import Text.ParserCombinators.Parsec hiding (State)
 import Debug.Trace
 
 data DuetVal = Reg Char | Val Int deriving Show
+type DuetQueue = [Int]
 data DuetInstruction = Snd DuetVal
                        | Rcv DuetVal
                        | Jgz DuetVal DuetVal
@@ -24,11 +26,18 @@ type DuetProgram = V.Vector DuetInstruction
 type DuetRegisters = M.Map Char Int
 data Duet = Duet { dRegisters :: DuetRegisters
                  , dPtr :: Int
-                 , dSound :: Maybe Int
+                 , dId :: Int
+                 , dSendCount :: Int
+                 , dSending :: Maybe Int
+                 , dReceiving :: Maybe Char
+                 , dRcvBuf :: DuetQueue
+                 , dSndBuf :: DuetQueue
                  , dProgram :: DuetProgram }
 
 instance Show Duet where
-  show d = show (dRegisters d) ++ " @" ++ show (dPtr d) ++ " " ++ show (dSound d)
+  show d = show (dRegisters d) ++ " @" ++ show (dPtr d) ++ " S" ++ show (dSndBuf d) ++ " R" ++ show (dRcvBuf d)
+
+defaultDuet = Duet M.empty 0 0 0 Nothing Nothing [] [] V.empty
 
 type DuetState = State Duet
 
@@ -93,6 +102,20 @@ addPtr n = do
 
 incPtr = addPtr 1
 
+send :: Int -> DuetState ()
+send v = do
+  st <- get
+  put $ st { dSndBuf = (dSndBuf st ++ [v]), dSendCount = dSendCount st + 1 }
+
+recv :: DuetState (Maybe Int)
+recv = do
+  st <- get
+  case dRcvBuf st of
+    (x:xs) -> do
+      put $ st { dRcvBuf = xs }
+      return $ Just x
+    [] -> return Nothing
+
 execInst :: DuetInstruction -> DuetState Bool
 execInst (Set (Reg reg) val) = do
   newVal <- getRegOrVal val
@@ -109,19 +132,19 @@ execInst (Jgz val1 val2) = do
   addPtr jump
   return False
 execInst (Snd val) = do
+  v <- getRegOrVal val
+  send v
   st <- get
-  sound <- getRegOrVal val
-  put $ st { dSound = Just sound }
   incPtr
   return False
-execInst (Rcv val) = do
+execInst (Rcv (Reg r)) = do
   st <- get
-  test <- getRegOrVal val
-  if test /= 0
-    then return True
-  else do
-    incPtr
-    return False
+  v <- recv
+  handle v
+  where
+    handle :: Maybe Int -> DuetState Bool
+    handle (Just x) = putReg r x >> incPtr >> return False
+    handle Nothing = return True
 execInst x = error $ "execInst not implemented yet for " ++ show x
 
 execNext :: DuetState Bool
@@ -129,16 +152,35 @@ execNext = do
   st <- get
   let prog = dProgram st
       p = dPtr st
-  if p >= length prog then return True
-    else execInst (prog V.! p)
+  if p >= length prog then return True else do
+    result <- execInst (prog V.! p)
+    return result
 
-runProgram :: DuetState ()
-runProgram = do
-  finished <- execNext
-  unless finished runProgram
+-- runProgram :: DuetState ()
+-- runProgram = do
+--   finished <- execNext
+--   unless finished runProgram
 
+runUntilWait :: DuetState ()
+runUntilWait = do
+  waiting <- execNext
+  st <- get
+  unless waiting runUntilWait
+
+runTwoPrograms :: Duet -> Duet -> (Int, Int)
+runTwoPrograms !d0 !d1
+  | (null $ dSndBuf d0') && (null $ dSndBuf d1') = (dSendCount d0', dSendCount d1')
+  | otherwise = runTwoPrograms d0'' d1''
+  where
+    (_, d0') = runState runUntilWait d0
+    (_, d1') = runState runUntilWait d1
+    d0'' = d0' { dSndBuf = [], dRcvBuf = dSndBuf d1' }
+    d1'' = d1' { dSndBuf = [], dRcvBuf = dSndBuf d0' }
 main = do
   prog <- fmap (fromRight V.empty . parseProgram) getContents  
-  let initState = Duet M.empty 0 Nothing prog
-      (result, st) = runState runProgram initState
-  putStrLn $ "Recovered sound: " ++ (show $ fromJust $ dSound st)
+  let d0 = defaultDuet { dProgram = prog, dId = 0, dRegisters = M.fromList [('p', 0)] }
+      d1 = defaultDuet { dProgram = prog, dId = 1, dRegisters = M.fromList [('p', 1)] }
+      (send0, send1) = runTwoPrograms d0 d1
+  putStrLn $ "Program 0 sent " ++ show send0 ++ " messages"
+  putStrLn $ "Program 1 sent " ++ show send1 ++ " messages"
+  -- putStrLn $ "Recovered sound: " ++ (show $ fromJust $ dSound st)
