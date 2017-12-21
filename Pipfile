@@ -9,8 +9,12 @@ name = "pypi"
 
 numpy = "*"
 coconut = "*"
+pandas = "*"
+tqdm = "*"
 
 
 [dev-packages]
 
 pytest = "*"
+ipython = "*"
+"autopep8" = "*"
