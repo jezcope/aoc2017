@@ -1,5 +1,6 @@
 resolver: lts-10.0
 extra-deps:
-  - vector
-  - monad-loops
-  - parsec
+  - vector-0.12.0.1
+  - monad-loops-0.4.3
+  - parsec-3.1.11
+  - mtl-2.2.1
