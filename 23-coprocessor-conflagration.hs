@@ -123,12 +123,14 @@ runUntilTerm = do
   terminate <- execNext
   unless terminate runUntilTerm
 
+optimisedCalc :: Int -> Int -> Int -> Int
+optimisedCalc a b k = sum $ map (const 1) $ filter notPrime [a,a+k..b]
+  where
+    notPrime n = any (==0) $ map (mod n) [2..n-1]
+
 main = do
   prog <- fmap (fromRight V.empty . parseProgram) getContents  
-  let c0 = defaultCopro { dProgram = prog }
-      c1 = c0 { dRegisters = M.fromList [('a', 1)] }
-      (_, c0') = runState runUntilTerm c0
-      (_, c1') = runState runUntilTerm c1
-      (h, _) = runState (getReg 'h') c1'
-  putStrLn $ show (dMulCount c0') ++ " multiplications made"
-  putStrLn $ "Value in 'h': " ++ show h
+  let c = defaultCopro { dProgram = prog }
+      (_, c') = runState runUntilTerm c
+  putStrLn $ show (dMulCount c') ++ " multiplications made"
+  putStrLn $ "Calculation result: " ++ show (optimisedCalc 107900 124900 17)
