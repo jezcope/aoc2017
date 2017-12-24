@@ -8,6 +8,49 @@ maintainer:          j.cope@erambler.co.uk
 build-type:          Simple
 cabal-version:       >=1.10
 
+executable 01-inverse-captcha
+ main-is:           01-inverse-captcha.hs
+ build-depends:     base >=4.10, text
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
+executable 09-stream-processing
+ main-is:           09-stream-processing.hs
+ build-depends:     base >=4.10, hspec
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
+executable 10-knot-hash
+ main-is:           10-knot-hash.hs
+ build-depends:     base >=4.10, text
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
+executable 13-packet-scanners
+ main-is:           13-packet-scanners.hs
+ build-depends:     base >=4.10, text
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
+executable 13-packet-scanners-redux
+ main-is:           13-packet-scanners-redux.hs
+ build-depends:     base >=4.10, text
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
+executable 14-disk-defragmentation
+ main-is:           14-disk-defragmentation.hs
+ other-modules:     KnotHash
+ build-depends:     base >=4.10, text, containers
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
+executable 18-duet
+ main-is:           18-duet.hs
+ build-depends:     base >=4.10, vector, monad-loops, parsec, containers, mtl
+ default-language:  Haskell2010
+ default-extensions: BangPatterns
+
 executable 23-coprocessor-conflagration
  main-is:           23-coprocessor-conflagration.hs 
  build-depends:     base >=4.10, vector, monad-loops, parsec, containers, mtl
