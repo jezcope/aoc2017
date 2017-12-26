@@ -31,5 +31,5 @@ pub extern fn spinlock0(n: usize, skip: usize) -> i32 {
         }
     }
 
-    return after_0 as i31;
+    return after_0 as i32;
 }
