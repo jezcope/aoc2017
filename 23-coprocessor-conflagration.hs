@@ -1,15 +1,9 @@
-{-# LANGUAGE BangPatterns #-}
 module Main where
 
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
-import Data.List
-import Data.Either
-import Data.Maybe
 import Control.Monad.State.Strict
-import Control.Monad.Loops
 import Text.ParserCombinators.Parsec hiding (State)
-import Debug.Trace
 
 type Register = Char
 type Value = Int
@@ -31,6 +25,7 @@ data Machine = Machine { dRegisters :: Registers
 instance Show Machine where
   show d = show (dRegisters d) ++ " @" ++ show (dPtr d) ++ " ×" ++ show (dMulCount d)
 
+defaultMachine :: Machine
 defaultMachine = Machine M.empty 0 0 V.empty
 
 type MachineState = State Machine
@@ -45,12 +40,12 @@ program = do
     regOp n c = do
       string n >> spaces
       val1 <- oneOf "abcdefgh"
-      spaces
-      val2 <- regOrVal
-      return $ c val1 val2
+      secondArg c val1
     jump n c = do
       string n >> spaces
       val1 <- regOrVal
+      secondArg c val1
+    secondArg c val1 = do
       spaces
       val2 <- regOrVal
       return $ c val1 val2
@@ -93,6 +88,7 @@ addPtr n = do
   st <- get
   put $ st { dPtr = n + dPtr st }
 
+incPtr :: MachineState ()
 incPtr = addPtr 1
 
 execInst :: Instruction -> MachineState ()
@@ -107,7 +103,6 @@ execInst (Mul reg val) = do
   return result
 execInst (Sub reg val) = modReg (-) reg val
 execInst (Jnz val1 val2) = do
-  st <- get
   test <- getRegOrVal val1
   jump <- if test /= 0 then getRegOrVal val2 else return 1
   addPtr jump
@@ -129,8 +124,9 @@ runUntilTerm = do
 optimisedCalc :: Int -> Int -> Int -> Int
 optimisedCalc a b k = sum $ map (const 1) $ filter notPrime [a,a+k..b]
   where
-    notPrime n = any (==0) $ map (mod n) [2..(floor $ sqrt $ fromIntegral n)]
+    notPrime n = elem 0 $ map (mod n) [2..(floor $ sqrt (fromIntegral n :: Double))]
 
+main :: IO ()
 main = do
   input <- getContents  
   case parseProgram input of
@@ -139,5 +135,4 @@ main = do
           (_, c') = runState runUntilTerm c
       putStrLn $ show (dMulCount c') ++ " multiplications made"
       putStrLn $ "Calculation result: " ++ show (optimisedCalc 107900 124900 17)
-    Left error -> do
-      print error
+    Left e -> print e

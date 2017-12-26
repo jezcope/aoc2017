@@ -124,7 +124,6 @@ execInst (Mul (Reg reg) val) = modReg (*) reg val
 execInst (Add (Reg reg) val) = modReg (+) reg val
 execInst (Mod (Reg reg) val) = modReg mod reg val
 execInst (Jgz val1 val2) = do
-  st <- get
   test <- getRegOrVal val1
   jump <- if test > 0 then getRegOrVal val2 else return 1
   addPtr jump
@@ -132,11 +131,9 @@ execInst (Jgz val1 val2) = do
 execInst (Snd val) = do
   v <- getRegOrVal val
   send v
-  st <- get
   incPtr
   return False
 execInst (Rcv (Reg r)) = do
-  st <- get
   v <- recv
   handle v
   where
