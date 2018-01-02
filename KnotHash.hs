@@ -1,4 +1,4 @@
-module Main where
+module KnotHash where
 
 import Data.Char (ord)
 import Data.Bits (xor)
@@ -22,7 +22,7 @@ simpleKnotHash size input = foldl step [0..size-1] input' & rotate (negate final
 
 fullKnotHash :: Int -> [Int] -> [Int]
 fullKnotHash size input = simpleKnotHash size input'
-  where input' = concat $ replicate 64 input
+  where input' = concat $ replicate 64 (input ++ [17, 31, 73, 47, 23])
     
 dense :: [Int] -> [Int]
 dense = unfoldr dense'
@@ -33,16 +33,5 @@ dense = unfoldr dense'
 hexify :: [Int] -> String
 hexify = concatMap (printf "%02x")
 
-strip :: String -> String
-strip = T.unpack . T.strip . T.pack
-
-parseInput :: String -> [Int]
-parseInput = map (read . T.unpack) . T.splitOn (T.singleton ',') . T.pack
-
-main = do
-  input <- fmap strip getContents
-  let simpleInput = parseInput input
-      asciiInput = map ord input ++ [17, 31, 73, 47, 23]
-      (a:b:_) = simpleKnotHash 256 simpleInput
-  print $ (a*b)
-  putStrLn $ fullKnotHash 256 asciiInput & dense & hexify
+hexHash :: [Int] -> String
+hexHash = hexify . dense . fullKnotHash 256
